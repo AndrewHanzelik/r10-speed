@@ -1,0 +1,373 @@
+:root {
+	color-scheme: dark;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	background: #0b0f0c;
+	color: #f4f7f4;
+	font-synthesis: none;
+	--panel: #131a15;
+	--panel-2: #18221b;
+	--line: #29352c;
+	--muted: #9cac9f;
+	--accent: #8ed48e;
+	--accent-strong: #a8e7a6;
+	--danger: #ff9c95;
+	--radius: 20px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	background:
+		radial-gradient(circle at 50% -10%, rgba(74, 121, 78, 0.28), transparent 38rem),
+		#0b0f0c;
+}
+
+button,
+input {
+	font: inherit;
+}
+
+button {
+	-webkit-tap-highlight-color: transparent;
+}
+
+.app-shell {
+	width: min(100%, 760px);
+	margin: 0 auto;
+	padding: max(20px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+}
+
+.topbar,
+.section-heading,
+.button-row,
+.toggle-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.topbar {
+	margin-bottom: 18px;
+}
+
+h1,
+h2,
+p {
+	margin: 0;
+}
+
+h1 {
+	font-size: clamp(1.45rem, 5vw, 2rem);
+	letter-spacing: -0.03em;
+}
+
+h2 {
+	font-size: 1.12rem;
+	margin-top: 4px;
+}
+
+.eyebrow,
+.metric-label {
+	font-size: 0.68rem;
+	font-weight: 700;
+	letter-spacing: 0.13em;
+	color: var(--muted);
+}
+
+.status-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	max-width: 48%;
+	padding: 8px 11px;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	font-size: 0.75rem;
+	color: var(--muted);
+	background: rgba(19, 26, 21, 0.8);
+}
+
+.status-pill span:last-child {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.status-dot {
+	width: 8px;
+	height: 8px;
+	flex: 0 0 auto;
+	border-radius: 50%;
+	background: #717c73;
+}
+
+.status-pill[data-state="ready"] {
+	color: var(--accent-strong);
+	border-color: rgba(142, 212, 142, 0.4);
+}
+
+.status-pill[data-state="ready"] .status-dot {
+	background: var(--accent);
+	box-shadow: 0 0 0 5px rgba(142, 212, 142, 0.1);
+}
+
+.status-pill[data-state="connecting"] .status-dot,
+.status-pill[data-state="selecting"] .status-dot,
+.status-pill[data-state="handshaking"] .status-dot,
+.status-pill[data-state="priming"] .status-dot {
+	background: #e6c879;
+}
+
+.notice,
+.speed-card,
+.metric-card,
+.session-card,
+.controls-card {
+	border: 1px solid var(--line);
+	background: linear-gradient(145deg, rgba(24, 34, 27, 0.96), rgba(17, 24, 19, 0.96));
+	box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
+}
+
+.notice {
+	display: grid;
+	gap: 5px;
+	margin-bottom: 14px;
+	padding: 14px 16px;
+	border-radius: 14px;
+	color: #f4d899;
+}
+
+.notice span {
+	font-size: 0.86rem;
+	color: #c3baa3;
+	line-height: 1.4;
+}
+
+.speed-card {
+	padding: 28px 20px 24px;
+	border-radius: var(--radius);
+	text-align: center;
+}
+
+.speed-value-row {
+	display: flex;
+	align-items: baseline;
+	justify-content: center;
+	gap: 10px;
+	margin: 6px 0 3px;
+}
+
+.speed-value {
+	font-size: clamp(5.2rem, 24vw, 9rem);
+	font-weight: 750;
+	font-variant-numeric: tabular-nums;
+	line-height: 0.98;
+	letter-spacing: -0.075em;
+}
+
+.speed-unit {
+	font-size: 0.9rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	color: var(--accent);
+}
+
+.swing-hint {
+	min-height: 1.4em;
+	font-size: 0.86rem;
+	color: var(--muted);
+}
+
+.metric-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 10px;
+	margin-top: 10px;
+}
+
+.metric-card {
+	min-width: 0;
+	padding: 14px 10px;
+	border-radius: 15px;
+	text-align: center;
+}
+
+.metric-card strong {
+	display: block;
+	margin-top: 7px;
+	font-size: clamp(1.05rem, 4vw, 1.35rem);
+	font-variant-numeric: tabular-nums;
+}
+
+.session-card,
+.controls-card {
+	margin-top: 10px;
+	padding: 18px;
+	border-radius: var(--radius);
+}
+
+.text-button {
+	padding: 8px;
+	border: 0;
+	background: transparent;
+	color: var(--muted);
+}
+
+.summary-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	margin-top: 16px;
+	border: 1px solid var(--line);
+	border-radius: 14px;
+	overflow: hidden;
+}
+
+.summary-grid div {
+	padding: 12px 8px;
+	text-align: center;
+	background: rgba(9, 13, 10, 0.26);
+}
+
+.summary-grid div + div {
+	border-left: 1px solid var(--line);
+}
+
+.summary-grid span {
+	display: block;
+	font-size: 0.68rem;
+	color: var(--muted);
+}
+
+.summary-grid strong {
+	display: block;
+	margin-top: 4px;
+	font-size: 1.15rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.history {
+	display: grid;
+	gap: 7px;
+	margin-top: 14px;
+}
+
+.history-row {
+	display: grid;
+	grid-template-columns: 32px 1fr auto;
+	align-items: center;
+	gap: 10px;
+	padding: 9px 10px;
+	border-radius: 11px;
+	background: rgba(255, 255, 255, 0.025);
+}
+
+.history-row .number {
+	font-size: 0.72rem;
+	color: var(--muted);
+}
+
+.history-row .details {
+	font-size: 0.74rem;
+	color: var(--muted);
+}
+
+.history-row strong {
+	font-variant-numeric: tabular-nums;
+}
+
+.empty-history {
+	padding: 10px 0 2px;
+	text-align: center;
+	font-size: 0.82rem;
+	color: var(--muted);
+}
+
+.toggle-row {
+	align-items: flex-start;
+}
+
+.toggle-row span {
+	display: grid;
+	gap: 3px;
+}
+
+.toggle-row small {
+	max-width: 30rem;
+	font-size: 0.75rem;
+	line-height: 1.35;
+	color: var(--muted);
+}
+
+.toggle-row input {
+	width: 46px;
+	height: 26px;
+	flex: 0 0 auto;
+	accent-color: var(--accent);
+}
+
+.button-row {
+	margin-top: 18px;
+}
+
+.primary-button,
+.secondary-button {
+	min-height: 50px;
+	flex: 1;
+	border-radius: 13px;
+	font-weight: 750;
+}
+
+.primary-button {
+	border: 0;
+	background: var(--accent-strong);
+	color: #0d160e;
+}
+
+.primary-button:disabled {
+	opacity: 0.5;
+}
+
+.secondary-button {
+	border: 1px solid var(--line);
+	background: var(--panel-2);
+	color: #eef5ef;
+}
+
+.error-text {
+	margin-top: 12px;
+	font-size: 0.8rem;
+	line-height: 1.4;
+	color: var(--danger);
+}
+
+footer {
+	padding: 16px 8px 0;
+	text-align: center;
+	font-size: 0.68rem;
+	line-height: 1.4;
+	color: #6f7d72;
+}
+
+.hidden {
+	display: none !important;
+}
+
+@media (max-width: 390px) {
+	.metric-label {
+		font-size: 0.61rem;
+	}
+
+	.speed-card {
+		padding-inline: 12px;
+	}
+
+	.session-card,
+	.controls-card {
+		padding: 15px;
+	}
+}
