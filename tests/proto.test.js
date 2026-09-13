@@ -1,0 +1,79 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+	buildAlertSupportRequest,
+	buildStatusRequest,
+	buildSubscribeRequest,
+	buildTiltRequest,
+	buildWakeUpRequest,
+	parseShotFromProto,
+} from "../src/r10/proto.js";
+
+const PRACTICE_PAYLOAD = Uint8Array.from([
+	0xB3, 0x13,
+	0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00,
+	0x41, 0x00, 0x00, 0x00,
+	0x41, 0x00, 0x00, 0x00,
+	0xF2, 0x01, 0x41,
+	0x1A, 0x3F,
+	0x0A, 0x01, 0x08,
+	0xCA, 0x3E, 0x39,
+	0x0A, 0x02, 0x08, 0x04,
+	0x12, 0x33,
+	0x08, 0x8E, 0x90, 0xD2, 0x02,
+	0x10, 0x00,
+	0x22, 0x0F,
+	0x0D, 0x18, 0xEC, 0xB9, 0x41,
+	0x1D, 0x12, 0xA1, 0xCF, 0xBF,
+	0x25, 0x0E, 0xAB, 0xFE, 0x3E,
+	0x2A, 0x19,
+	0x08, 0xA6, 0x81, 0xD2, 0x02,
+	0x10, 0xE2, 0x8D, 0xD2, 0x02,
+	0x18, 0x8E, 0x90, 0xD2, 0x02,
+	0x20, 0xDE, 0x94, 0xD2, 0x02,
+	0x28, 0xA2, 0x91, 0xD2, 0x02,
+]);
+
+test("parses a real firmware 4.50 no-ball practice swing", () => {
+	const shot = parseShotFromProto(PRACTICE_PAYLOAD.slice(16));
+	assert.ok(shot);
+	assert.equal(shot.shotId, 5_539_854);
+	assert.equal(shot.shotType, 0);
+	assert.equal(shot.alertType, 8);
+	assert.equal(shot.state, 4);
+	assert.ok(Math.abs(shot.clubHeadSpeedMps - 23.24) < 0.01);
+	assert.ok(Math.abs(shot.clubHeadSpeedMph - 51.99) < 0.05);
+	assert.ok(Math.abs(shot.clubPathDeg - (-1.622103)) < 0.0001);
+	assert.ok(Math.abs(shot.attackAngleDeg - 0.4974) < 0.0001);
+	assert.equal(shot.backSwingStartMs, 5_537_958);
+	assert.equal(shot.downSwingStartMs, 5_539_554);
+	assert.equal(shot.impactMs, 5_539_854);
+	assert.equal(shot.backswingMs, 1596);
+	assert.equal(shot.downswingMs, 300);
+	assert.ok(Math.abs(shot.tempoRatio - 5.32) < 0.001);
+	assert.equal(shot.clubFaceDeg, undefined);
+});
+
+test("request builders match known protocol bytes", () => {
+	assert.deepEqual(
+		Array.from(buildWakeUpRequest()),
+		[0xB2, 0x02, 0x02, 0x1A, 0x00],
+	);
+	assert.deepEqual(
+		Array.from(buildStatusRequest()),
+		[0xB2, 0x02, 0x02, 0x0A, 0x00],
+	);
+	assert.deepEqual(
+		Array.from(buildTiltRequest()),
+		[0xB2, 0x02, 0x02, 0x2A, 0x00],
+	);
+	assert.deepEqual(
+		Array.from(buildAlertSupportRequest()),
+		[0xF2, 0x01, 0x02, 0x22, 0x00],
+	);
+	assert.deepEqual(
+		Array.from(buildSubscribeRequest([8])),
+		[0xF2, 0x01, 0x06, 0x0A, 0x04, 0x0A, 0x02, 0x08, 0x08],
+	);
+});
