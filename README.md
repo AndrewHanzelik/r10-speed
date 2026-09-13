@@ -54,7 +54,7 @@ The included workflow runs the protocol tests and deploys the static files whene
 
 For a new repository, the one-time setup is:
 
-1. Create a public GitHub repository, e.g. `r10-speed`.
+1. Create a public GitHub repository, e.g. `r10-speed`, or use a GitHub plan that supports Pages for private repositories.
 2. Put these files on the `main` branch.
 3. Open **Settings → Pages** in GitHub.
 4. Set the Pages source to **GitHub Actions** if GitHub has not already selected it.
