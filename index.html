@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<meta name="theme-color" content="#101612">
+	<meta name="description" content="Unofficial browser-based Garmin Approach R10 club-speed trainer.">
+	<title>R10 Speed</title>
+	<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+	<main class="app-shell">
+		<header class="topbar">
+			<div>
+				<p class="eyebrow">GARMIN APPROACH R10</p>
+				<h1>Speed Trainer</h1>
+			</div>
+			<div id="statusPill" class="status-pill" data-state="disconnected">
+				<span class="status-dot"></span>
+				<span id="statusText">Disconnected</span>
+			</div>
+		</header>
+
+		<section id="browserWarning" class="notice hidden" role="status">
+			<strong>Web Bluetooth is unavailable in this browser.</strong>
+			<span>On iPhone, open this page in a Web Bluetooth browser such as Bluefy.</span>
+		</section>
+
+		<section class="speed-card" aria-live="polite">
+			<p class="metric-label">CLUB HEAD SPEED</p>
+			<div class="speed-value-row">
+				<span id="speedValue" class="speed-value">--.-</span>
+				<span class="speed-unit">MPH</span>
+			</div>
+			<p id="swingHint" class="swing-hint">Connect your R10 to begin.</p>
+		</section>
+
+		<section class="metric-grid" aria-label="Latest swing details">
+			<article class="metric-card">
+				<span class="metric-label">CLUB PATH</span>
+				<strong id="pathValue">--</strong>
+			</article>
+			<article class="metric-card">
+				<span class="metric-label">ATTACK ANGLE</span>
+				<strong id="attackValue">--</strong>
+			</article>
+			<article class="metric-card">
+				<span class="metric-label">TEMPO</span>
+				<strong id="tempoValue">--</strong>
+			</article>
+		</section>
+
+		<section class="session-card">
+			<div class="section-heading">
+				<div>
+					<p class="eyebrow">CURRENT SESSION</p>
+					<h2>Speed summary</h2>
+				</div>
+				<button id="resetButton" class="text-button" type="button">Reset</button>
+			</div>
+			<div class="summary-grid">
+				<div><span>Average</span><strong id="averageValue">--</strong></div>
+				<div><span>Fastest</span><strong id="fastestValue">--</strong></div>
+				<div><span>Swings</span><strong id="swingCount">0</strong></div>
+			</div>
+			<div id="history" class="history" aria-label="Recent swings">
+				<p class="empty-history">Your recent swings will appear here.</p>
+			</div>
+		</section>
+
+		<section class="controls-card">
+			<label class="toggle-row" for="voiceToggle">
+				<span>
+					<strong>Speak speed</strong>
+					<small>Announce the rounded MPH after each swing.</small>
+				</span>
+				<input id="voiceToggle" type="checkbox" role="switch">
+			</label>
+			<div class="button-row">
+				<button id="connectButton" class="primary-button" type="button">Connect R10</button>
+				<button id="disconnectButton" class="secondary-button hidden" type="button">Disconnect</button>
+				<button id="demoButton" class="secondary-button hidden" type="button">Demo swing</button>
+			</div>
+			<p id="errorText" class="error-text hidden" role="alert"></p>
+		</section>
+
+		<footer>
+			<p>Unofficial R10 utility. Not affiliated with or endorsed by Garmin.</p>
+		</footer>
+	</main>
+	<script type="module" src="./src/main.js"></script>
+</body>
+</html>
