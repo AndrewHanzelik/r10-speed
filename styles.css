@@ -24,6 +24,47 @@ body {
 	background:
 		radial-gradient(circle at 50% -10%, rgba(74, 121, 78, 0.28), transparent 38rem),
 		#0b0f0c;
+	overflow-x: hidden;
+}
+
+body::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 140ms ease, background 140ms ease;
+	z-index: 0;
+}
+
+body[data-feedback-state="recording"]::before {
+	opacity: 1;
+	background: rgba(80, 170, 255, 0.16);
+}
+
+body[data-feedback-state="processing"]::before {
+	opacity: 1;
+	background: rgba(255, 208, 92, 0.18);
+}
+
+body[data-feedback-state="success"]::before {
+	opacity: 1;
+	background: rgba(88, 220, 122, 0.20);
+}
+
+body[data-feedback-state="rejected"]::before {
+	opacity: 1;
+	background: rgba(255, 102, 102, 0.18);
+}
+
+body[data-feedback-state="standby"]::before {
+	opacity: 1;
+	background: rgba(115, 130, 144, 0.14);
+}
+
+body[data-feedback-state="error"]::before {
+	opacity: 1;
+	background: rgba(255, 88, 88, 0.22);
 }
 
 button,
@@ -36,9 +77,20 @@ button {
 }
 
 .app-shell {
+	position: relative;
+	z-index: 1;
 	width: min(100%, 760px);
 	margin: 0 auto;
 	padding: max(20px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+	transition: transform 140ms ease;
+}
+
+body[data-feedback-state="recording"] .app-shell,
+body[data-feedback-state="processing"] .app-shell,
+body[data-feedback-state="success"] .app-shell,
+body[data-feedback-state="rejected"] .app-shell,
+body[data-feedback-state="error"] .app-shell {
+	transform: scale(1.01);
 }
 
 .topbar,
@@ -131,6 +183,43 @@ h2 {
 	border: 1px solid var(--line);
 	background: linear-gradient(145deg, rgba(24, 34, 27, 0.96), rgba(17, 24, 19, 0.96));
 	box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
+	transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+body[data-feedback-state="recording"] .speed-card,
+body[data-feedback-state="recording"] .metric-card,
+body[data-feedback-state="recording"] .session-card,
+body[data-feedback-state="recording"] .controls-card {
+	border-color: rgba(92, 167, 255, 0.50);
+	box-shadow: 0 14px 36px rgba(41, 91, 163, 0.22);
+}
+
+body[data-feedback-state="processing"] .speed-card,
+body[data-feedback-state="processing"] .metric-card,
+body[data-feedback-state="processing"] .session-card,
+body[data-feedback-state="processing"] .controls-card {
+	border-color: rgba(255, 199, 79, 0.50);
+	box-shadow: 0 14px 36px rgba(173, 130, 28, 0.20);
+}
+
+body[data-feedback-state="success"] .speed-card,
+body[data-feedback-state="success"] .metric-card,
+body[data-feedback-state="success"] .session-card,
+body[data-feedback-state="success"] .controls-card {
+	border-color: rgba(88, 220, 122, 0.52);
+	box-shadow: 0 14px 36px rgba(42, 135, 65, 0.25);
+}
+
+body[data-feedback-state="rejected"] .speed-card,
+body[data-feedback-state="rejected"] .metric-card,
+body[data-feedback-state="rejected"] .session-card,
+body[data-feedback-state="rejected"] .controls-card,
+body[data-feedback-state="error"] .speed-card,
+body[data-feedback-state="error"] .metric-card,
+body[data-feedback-state="error"] .session-card,
+body[data-feedback-state="error"] .controls-card {
+	border-color: rgba(255, 108, 108, 0.50);
+	box-shadow: 0 14px 36px rgba(158, 44, 44, 0.22);
 }
 
 .notice {
@@ -289,6 +378,12 @@ h2 {
 
 .toggle-row {
 	align-items: flex-start;
+}
+
+.toggle-row + .toggle-row {
+	margin-top: 14px;
+	padding-top: 14px;
+	border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .toggle-row span {
