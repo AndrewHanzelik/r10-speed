@@ -1,0 +1,123 @@
+.ball-card {
+	margin-top: 10px;
+	padding: 18px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: linear-gradient(145deg, rgba(24, 34, 27, 0.96), rgba(17, 24, 19, 0.96));
+	box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
+}
+
+body[data-feedback-state="recording"] .ball-card {
+	border-color: rgba(92, 167, 255, 0.5);
+}
+
+body[data-feedback-state="processing"] .ball-card {
+	border-color: rgba(255, 199, 79, 0.5);
+}
+
+body[data-feedback-state="success"] .ball-card {
+	border-color: rgba(88, 220, 122, 0.52);
+}
+
+body[data-feedback-state="rejected"] .ball-card,
+body[data-feedback-state="error"] .ball-card {
+	border-color: rgba(255, 108, 108, 0.5);
+}
+
+.estimate-badge {
+	padding: 6px 9px;
+	border: 1px solid rgba(142, 212, 142, 0.28);
+	border-radius: 999px;
+	font-size: 0.68rem;
+	color: var(--accent-strong);
+	white-space: nowrap;
+}
+
+.ball-primary-grid,
+.ball-detail-grid {
+	display: grid;
+	gap: 8px;
+}
+
+.ball-primary-grid {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	margin-top: 16px;
+}
+
+.ball-primary-grid > div {
+	padding: 16px 12px;
+	border: 1px solid var(--line);
+	border-radius: 14px;
+	text-align: center;
+	background: rgba(9, 13, 10, 0.26);
+}
+
+.ball-primary-grid span,
+.ball-detail-grid span {
+	display: block;
+	font-size: 0.68rem;
+	color: var(--muted);
+}
+
+.ball-primary-grid strong {
+	display: block;
+	margin-top: 5px;
+	font-size: clamp(1.4rem, 6vw, 2rem);
+	font-variant-numeric: tabular-nums;
+}
+
+.ball-detail-grid {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	margin-top: 8px;
+}
+
+.ball-detail-grid > div {
+	min-width: 0;
+	padding: 11px 8px;
+	border-radius: 11px;
+	text-align: center;
+	background: rgba(255, 255, 255, 0.025);
+}
+
+.ball-detail-grid strong {
+	display: block;
+	margin-top: 4px;
+	font-size: 0.82rem;
+	font-variant-numeric: tabular-nums;
+	overflow-wrap: anywhere;
+}
+
+.estimate-note,
+.sound-note {
+	font-size: 0.72rem;
+	line-height: 1.4;
+	color: var(--muted);
+}
+
+.estimate-note {
+	margin-top: 10px;
+}
+
+.control-heading {
+	display: grid;
+	gap: 4px;
+	margin-bottom: 14px;
+}
+
+.control-heading small {
+	font-size: 0.75rem;
+	line-height: 1.35;
+	color: var(--muted);
+}
+
+.sound-note {
+	margin-top: 14px;
+	padding-top: 12px;
+	border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 480px) {
+	.ball-detail-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
