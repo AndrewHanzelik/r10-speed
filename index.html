@@ -8,7 +8,7 @@
 	<title>R10 Speed</title>
 	<link rel="stylesheet" href="./styles.css">
 </head>
-<body>
+<body data-feedback-state="idle">
 	<main class="app-shell">
 		<header class="topbar">
 			<div>
@@ -75,6 +75,13 @@
 					<small>Announce the rounded MPH after each swing.</small>
 				</span>
 				<input id="voiceToggle" type="checkbox" role="switch">
+			</label>
+			<label class="toggle-row" for="soundToggle">
+				<span>
+					<strong>Status sounds</strong>
+					<small>Play feedback sounds for recording, rejected swings, and successful captures.</small>
+				</span>
+				<input id="soundToggle" type="checkbox" role="switch">
 			</label>
 			<div class="button-row">
 				<button id="connectButton" class="primary-button" type="button">Connect R10</button>
