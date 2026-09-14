@@ -74,6 +74,15 @@ client.addEventListener("state", (event) => {
 	setConnectionState(state, message);
 });
 
+client.addEventListener("radarstate", (event) => {
+	const { state, name } = event.detail;
+	showRadarState(state, name);
+});
+
+client.addEventListener("rejected", () => {
+	elements.swingHint.textContent = "R10 saw that swing, but did not return club metrics. Try a normal full-speed swing through the same imaginary ball position.";
+});
+
 client.addEventListener("shot", (event) => {
 	handleShot(event.detail);
 });
@@ -113,6 +122,32 @@ function handleShot(metrics) {
 
 	if (elements.voiceToggle.checked) {
 		speakSpeed(shot.clubHeadSpeedMph);
+	}
+}
+
+function showRadarState(state, name) {
+	switch (state) {
+		case 0:
+			elements.swingHint.textContent = "R10 entered standby. Waking it back up…";
+			break;
+		case 1:
+			elements.swingHint.textContent = "R10 is checking radar interference…";
+			break;
+		case 2:
+			elements.swingHint.textContent = "R10 is waiting and ready for another swing.";
+			break;
+		case 3:
+			elements.swingHint.textContent = "R10 sees your swing — recording…";
+			break;
+		case 4:
+			elements.swingHint.textContent = "R10 is processing that swing…";
+			break;
+		case 5:
+			elements.swingHint.textContent = "R10 reported a radar/device error. Check its alignment and indicator light.";
+			break;
+		default:
+			elements.swingHint.textContent = `R10 radar state: ${name}.`;
+			break;
 	}
 }
 
