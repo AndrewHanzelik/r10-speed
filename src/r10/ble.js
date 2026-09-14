@@ -11,6 +11,7 @@ import {
 	startsWithBytes,
 } from "./framing.js";
 import {
+	ProtoReader,
 	buildAlertSupportRequest,
 	buildShotConfigRequest,
 	buildStatusRequest,
@@ -26,8 +27,84 @@ export const R10_UUID = Object.freeze({
 	WRITER: "6a4e2822-667b-11e3-949a-0800200c9a66",
 });
 
+const R10_STATE = Object.freeze({
+	STANDBY: 0,
+	INTERFERENCE_TEST: 1,
+	WAITING: 2,
+	RECORDING: 3,
+	PROCESSING: 4,
+	ERROR: 5,
+});
+
+const R10_STATE_NAME = Object.freeze({
+	0: "Standby",
+	1: "Interference test",
+	2: "Waiting",
+	3: "Recording",
+	4: "Processing",
+	5: "Error",
+});
+
 function bytesFromDataView(view) {
 	return new Uint8Array(view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength));
+}
+
+function findLengthDelimited(bytes, targetField) {
+	const reader = new ProtoReader(bytes);
+	while (!reader.isAtEnd) {
+		const { field, wire } = reader.readTag();
+		if (field === targetField && wire === 2) {
+			return reader.readLengthDelimited();
+		}
+		reader.skip(wire);
+	}
+	return null;
+}
+
+function parseRadarStateFromProto(protoBytes) {
+	const eventSharing = findLengthDelimited(protoBytes, 30);
+	if (!eventSharing) {
+		return null;
+	}
+
+	const notification = findLengthDelimited(eventSharing, 3);
+	if (!notification) {
+		return null;
+	}
+
+	const notificationReader = new ProtoReader(notification);
+	let details = null;
+	while (!notificationReader.isAtEnd) {
+		const { field, wire } = notificationReader.readTag();
+		if (field === 1001 && wire === 2) {
+			details = notificationReader.readLengthDelimited();
+		} else {
+			notificationReader.skip(wire);
+		}
+	}
+	if (!details) {
+		return null;
+	}
+
+	const detailsReader = new ProtoReader(details);
+	while (!detailsReader.isAtEnd) {
+		const { field, wire } = detailsReader.readTag();
+		if (field === 1 && wire === 2) {
+			const stateBytes = detailsReader.readLengthDelimited();
+			const stateReader = new ProtoReader(stateBytes);
+			while (!stateReader.isAtEnd) {
+				const stateTag = stateReader.readTag();
+				if (stateTag.field === 1 && stateTag.wire === 0) {
+					return stateReader.readVarint();
+				}
+				stateReader.skip(stateTag.wire);
+			}
+		} else {
+			detailsReader.skip(wire);
+		}
+	}
+
+	return null;
 }
 
 export class R10Client extends EventTarget {
@@ -46,6 +123,9 @@ export class R10Client extends EventTarget {
 	#inboundChain = Promise.resolve();
 	#disconnectHandler = null;
 	#notificationHandler = null;
+	#sawRecordingThisCycle = false;
+	#sawMetricsThisCycle = false;
+	#wakeInFlight = null;
 
 	get connected() {
 		return Boolean(this.#device?.gatt?.connected && this.#writer && this.#notifier);
@@ -284,8 +364,6 @@ export class R10Client extends EventTarget {
 			let pending = this.#pending.get(counter);
 			let pendingKey = counter;
 
-			// Firmware/protocol variants have historically been loose about
-			// correlation. There is only one application request in flight.
 			if (!pending && this.#pending.size === 1) {
 				[pendingKey, pending] = this.#pending.entries().next().value;
 			}
@@ -302,6 +380,16 @@ export class R10Client extends EventTarget {
 		}
 
 		const protoBytes = payload.slice(16);
+		let radarState = null;
+		try {
+			radarState = parseRadarStateFromProto(protoBytes);
+		} catch (error) {
+			this.#emitError(new Error(`Could not parse R10 state data: ${error.message}`));
+		}
+		if (radarState != null) {
+			this.#handleRadarState(radarState);
+		}
+
 		let metrics;
 		try {
 			metrics = parseShotFromProto(protoBytes);
@@ -314,8 +402,43 @@ export class R10Client extends EventTarget {
 			return;
 		}
 
+		this.#sawMetricsThisCycle = true;
 		this.#processedShotIds.add(metrics.shotId);
 		this.dispatchEvent(new CustomEvent("shot", { detail: metrics }));
+	}
+
+	#handleRadarState(state) {
+		this.dispatchEvent(new CustomEvent("radarstate", {
+			detail: {
+				state,
+				name: R10_STATE_NAME[state] ?? `State ${state}`,
+			},
+		}));
+
+		if (state === R10_STATE.RECORDING) {
+			this.#sawRecordingThisCycle = true;
+			this.#sawMetricsThisCycle = false;
+			return;
+		}
+
+		if (state === R10_STATE.WAITING || state === R10_STATE.STANDBY) {
+			const rejected = this.#sawRecordingThisCycle && !this.#sawMetricsThisCycle;
+			this.#sawRecordingThisCycle = false;
+			this.#sawMetricsThisCycle = false;
+			if (rejected) {
+				this.dispatchEvent(new CustomEvent("rejected", {
+					detail: { state },
+				}));
+			}
+		}
+
+		if (state === R10_STATE.STANDBY && this.#pending.size === 0 && !this.#wakeInFlight) {
+			this.#wakeInFlight = this.#sendProtoRequest(buildWakeUpRequest())
+				.catch((error) => this.#emitError(new Error(`Could not wake R10 from standby: ${error.message}`)))
+				.finally(() => {
+					this.#wakeInFlight = null;
+				});
+		}
 	}
 
 	#handleDisconnect() {
@@ -345,6 +468,9 @@ export class R10Client extends EventTarget {
 		this.#notificationHandler = null;
 		this.#writeChain = Promise.resolve();
 		this.#inboundChain = Promise.resolve();
+		this.#sawRecordingThisCycle = false;
+		this.#sawMetricsThisCycle = false;
+		this.#wakeInFlight = null;
 	}
 
 	#emitState(state, message) {
