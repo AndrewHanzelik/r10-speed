@@ -2,6 +2,11 @@ import { R10Client } from "./r10/ble.js";
 
 const client = new R10Client();
 const swings = [];
+const soundState = {
+	audioContext: null,
+	unlocked: false,
+};
+const feedbackTimers = new Set();
 
 const elements = {
 	statusPill: document.querySelector("#statusPill"),
@@ -17,6 +22,7 @@ const elements = {
 	swingCount: document.querySelector("#swingCount"),
 	history: document.querySelector("#history"),
 	voiceToggle: document.querySelector("#voiceToggle"),
+	soundToggle: document.querySelector("#soundToggle"),
 	connectButton: document.querySelector("#connectButton"),
 	disconnectButton: document.querySelector("#disconnectButton"),
 	resetButton: document.querySelector("#resetButton"),
@@ -26,14 +32,24 @@ const elements = {
 
 const connectingStates = new Set(["selecting", "connecting", "handshaking", "priming"]);
 const savedVoice = localStorage.getItem("r10-speed:speak");
+const savedSounds = localStorage.getItem("r10-speed:sounds");
 elements.voiceToggle.checked = savedVoice === "true";
+elements.soundToggle.checked = savedSounds !== "false";
 
 elements.voiceToggle.addEventListener("change", () => {
 	localStorage.setItem("r10-speed:speak", String(elements.voiceToggle.checked));
 });
 
+elements.soundToggle.addEventListener("change", async () => {
+	localStorage.setItem("r10-speed:sounds", String(elements.soundToggle.checked));
+	if (elements.soundToggle.checked) {
+		await ensureAudioReady();
+	}
+});
+
 elements.connectButton.addEventListener("click", async () => {
 	clearError();
+	await ensureAudioReady();
 	try {
 		await client.connect();
 	} catch (error) {
@@ -54,19 +70,24 @@ elements.resetButton.addEventListener("click", () => {
 	elements.attackValue.textContent = "--";
 	elements.tempoValue.textContent = "--";
 	elements.swingHint.textContent = client.connected ? "Ready for a swing." : "Connect your R10 to begin.";
+	setFeedbackState("idle");
 });
 
-elements.demoButton.addEventListener("click", () => {
-	const speed = 104 + Math.random() * 10;
-	handleShot({
-		shotId: Date.now(),
-		shotType: 0,
-		clubHeadSpeedMps: speed / 2.2369362920544,
-		clubHeadSpeedMph: speed,
-		clubPathDeg: -2 + Math.random() * 4,
-		attackAngleDeg: 1 + Math.random() * 5,
-		tempoRatio: 2.7 + Math.random() * 0.8,
-	});
+elements.demoButton.addEventListener("click", async () => {
+	await ensureAudioReady();
+	indicateRecording();
+	window.setTimeout(() => {
+		const speed = 104 + Math.random() * 10;
+		handleShot({
+			shotId: Date.now(),
+			shotType: 0,
+			clubHeadSpeedMps: speed / 2.2369362920544,
+			clubHeadSpeedMph: speed,
+			clubPathDeg: -2 + Math.random() * 4,
+			attackAngleDeg: 1 + Math.random() * 5,
+			tempoRatio: 2.7 + Math.random() * 0.8,
+		});
+	}, 450);
 });
 
 client.addEventListener("state", (event) => {
@@ -80,6 +101,7 @@ client.addEventListener("radarstate", (event) => {
 });
 
 client.addEventListener("rejected", () => {
+	indicateRejected();
 	elements.swingHint.textContent = "R10 saw that swing, but did not return club metrics. Try a normal full-speed swing through the same imaginary ball position.";
 });
 
@@ -88,6 +110,7 @@ client.addEventListener("shot", (event) => {
 });
 
 client.addEventListener("error", (event) => {
+	indicateError();
 	showError(event.detail.error);
 });
 
@@ -101,6 +124,7 @@ if (new URLSearchParams(window.location.search).has("demo")) {
 }
 
 renderSession();
+setFeedbackState("idle");
 
 function handleShot(metrics) {
 	const shot = {
@@ -119,6 +143,7 @@ function handleShot(metrics) {
 	elements.swingHint.textContent = shot.shotType === 0 ? "Practice swing captured." : "Swing captured.";
 	clearError();
 	renderSession();
+	indicateSuccess();
 
 	if (elements.voiceToggle.checked) {
 		speakSpeed(shot.clubHeadSpeedMph);
@@ -128,21 +153,29 @@ function handleShot(metrics) {
 function showRadarState(state, name) {
 	switch (state) {
 		case 0:
+			setFeedbackState("standby");
 			elements.swingHint.textContent = "R10 entered standby. Waking it back up…";
 			break;
 		case 1:
+			setFeedbackState("processing");
 			elements.swingHint.textContent = "R10 is checking radar interference…";
 			break;
 		case 2:
+			if (document.body.dataset.feedbackState !== "success" && document.body.dataset.feedbackState !== "rejected") {
+				setFeedbackState("idle");
+			}
 			elements.swingHint.textContent = "R10 is waiting and ready for another swing.";
 			break;
 		case 3:
+			indicateRecording();
 			elements.swingHint.textContent = "R10 sees your swing — recording…";
 			break;
 		case 4:
+			setFeedbackState("processing");
 			elements.swingHint.textContent = "R10 is processing that swing…";
 			break;
 		case 5:
+			indicateError();
 			elements.swingHint.textContent = "R10 reported a radar/device error. Check its alignment and indicator light.";
 			break;
 		default:
@@ -206,10 +239,15 @@ function setConnectionState(state, message) {
 	if (ready) {
 		elements.swingHint.textContent = "Ready for a swing. No ball required.";
 		clearError();
+		if (document.body.dataset.feedbackState === "standby") {
+			setFeedbackState("idle");
+		}
 	} else if (connectingStates.has(state)) {
 		elements.swingHint.textContent = message;
+		setFeedbackState("idle");
 	} else if (state === "disconnected") {
 		elements.swingHint.textContent = "Connect your R10 to begin.";
+		setFeedbackState("idle");
 	}
 }
 
@@ -246,6 +284,106 @@ function speakSpeed(mph) {
 	const utterance = new SpeechSynthesisUtterance(String(Math.round(mph)));
 	utterance.rate = 1.05;
 	window.speechSynthesis.speak(utterance);
+}
+
+async function ensureAudioReady() {
+	if (!elements.soundToggle.checked) {
+		return;
+	}
+
+	const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+	if (!AudioContextCtor) {
+		return;
+	}
+
+	if (!soundState.audioContext) {
+		soundState.audioContext = new AudioContextCtor();
+	}
+
+	if (soundState.audioContext.state === "suspended") {
+		try {
+			await soundState.audioContext.resume();
+		} catch {
+			return;
+		}
+	}
+
+	soundState.unlocked = true;
+}
+
+function playPattern(notes) {
+	if (!elements.soundToggle.checked || !soundState.audioContext || !soundState.unlocked) {
+		return;
+	}
+
+	const context = soundState.audioContext;
+	const startAt = context.currentTime + 0.01;
+	let cursor = startAt;
+
+	for (const note of notes) {
+		const gain = context.createGain();
+		const oscillator = context.createOscillator();
+		oscillator.type = note.type ?? "sine";
+		oscillator.frequency.setValueAtTime(note.frequency, cursor);
+		gain.gain.setValueAtTime(0.0001, cursor);
+		gain.gain.exponentialRampToValueAtTime(note.gain ?? 0.08, cursor + 0.01);
+		gain.gain.exponentialRampToValueAtTime(0.0001, cursor + note.duration);
+		oscillator.connect(gain);
+		gain.connect(context.destination);
+		oscillator.start(cursor);
+		oscillator.stop(cursor + note.duration + 0.02);
+		cursor += note.duration + (note.gap ?? 0.03);
+	}
+}
+
+function indicateRecording() {
+	setFeedbackState("recording");
+	playPattern([
+		{ frequency: 740, duration: 0.08, gain: 0.05, type: "triangle" },
+	]);
+}
+
+function indicateRejected() {
+	setFeedbackState("rejected", 1500);
+	playPattern([
+		{ frequency: 330, duration: 0.11, gain: 0.07, type: "sawtooth", gap: 0.03 },
+		{ frequency: 240, duration: 0.17, gain: 0.07, type: "sawtooth" },
+	]);
+}
+
+function indicateSuccess() {
+	setFeedbackState("success", 1250);
+	playPattern([
+		{ frequency: 660, duration: 0.07, gain: 0.045, type: "triangle", gap: 0.02 },
+		{ frequency: 990, duration: 0.12, gain: 0.06, type: "triangle" },
+	]);
+}
+
+function indicateError() {
+	setFeedbackState("error", 1800);
+	playPattern([
+		{ frequency: 220, duration: 0.18, gain: 0.06, type: "square", gap: 0.04 },
+		{ frequency: 220, duration: 0.18, gain: 0.05, type: "square" },
+	]);
+}
+
+function setFeedbackState(state, resetAfterMs = 0) {
+	document.body.dataset.feedbackState = state;
+	clearFeedbackTimers();
+	if (resetAfterMs > 0) {
+		const timeoutId = window.setTimeout(() => {
+			feedbackTimers.delete(timeoutId);
+			document.body.dataset.feedbackState = "idle";
+		}, resetAfterMs);
+		feedbackTimers.add(timeoutId);
+	}
+}
+
+function clearFeedbackTimers() {
+	for (const timeoutId of feedbackTimers) {
+		window.clearTimeout(timeoutId);
+	}
+	feedbackTimers.clear();
 }
 
 function showError(error) {
