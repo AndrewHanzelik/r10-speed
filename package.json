@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"test": "node --test"
+		"test": "node --check src/app.js && node --check src/carry.js && node --test"
 	},
 	"engines": {
 		"node": ">=20"
