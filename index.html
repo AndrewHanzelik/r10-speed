@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 	<meta name="theme-color" content="#101612">
-	<meta name="description" content="Unofficial browser-based Garmin Approach R10 club-speed trainer.">
+	<meta name="description" content="Unofficial browser-based Garmin Approach R10 speed and ball-flight utility.">
 	<title>R10 Speed</title>
 	<link rel="stylesheet" href="./styles.css">
 </head>
@@ -50,6 +50,33 @@
 			</article>
 		</section>
 
+		<section id="ballCard" class="ball-card hidden" aria-label="Latest ball data">
+			<div class="section-heading">
+				<div>
+					<p class="eyebrow">BALL DATA</p>
+					<h2>Measured + estimated</h2>
+				</div>
+				<span class="estimate-badge">Carry estimate</span>
+			</div>
+			<div class="ball-primary-grid">
+				<div>
+					<span>Ball speed</span>
+					<strong id="ballSpeedValue">--</strong>
+				</div>
+				<div>
+					<span>Carry</span>
+					<strong id="carryValue">--</strong>
+				</div>
+			</div>
+			<div class="ball-detail-grid">
+				<div><span>Launch</span><strong id="launchValue">--</strong></div>
+				<div><span>Direction</span><strong id="directionValue">--</strong></div>
+				<div><span>Spin</span><strong id="spinValue">--</strong></div>
+				<div><span>Spin axis</span><strong id="spinAxisValue">--</strong></div>
+			</div>
+			<p class="estimate-note">Carry is simulated locally from measured launch conditions using standard air density and no wind.</p>
+		</section>
+
 		<section class="session-card">
 			<div class="section-heading">
 				<div>
@@ -59,9 +86,9 @@
 				<button id="resetButton" class="text-button" type="button">Reset</button>
 			</div>
 			<div class="summary-grid">
-				<div><span>Average</span><strong id="averageValue">--</strong></div>
-				<div><span>Fastest</span><strong id="fastestValue">--</strong></div>
-				<div><span>Swings</span><strong id="swingCount">0</strong></div>
+				<div><span>Club avg</span><strong id="averageValue">--</strong></div>
+				<div><span>Club max</span><strong id="fastestValue">--</strong></div>
+				<div><span>Shots</span><strong id="swingCount">0</strong></div>
 			</div>
 			<div id="history" class="history" aria-label="Recent swings">
 				<p class="empty-history">Your recent swings will appear here.</p>
@@ -69,20 +96,32 @@
 		</section>
 
 		<section class="controls-card">
-			<label class="toggle-row" for="voiceToggle">
+			<div class="control-heading">
+				<strong>Voice readout</strong>
+				<small>Choose exactly what the phone announces after each captured shot.</small>
+			</div>
+			<label class="toggle-row" for="clubReadoutToggle">
 				<span>
-					<strong>Speak speed</strong>
-					<small>Announce the rounded MPH after each swing.</small>
+					<strong>Club speed</strong>
+					<small>Read club head speed when the R10 reports it.</small>
 				</span>
-				<input id="voiceToggle" type="checkbox" role="switch">
+				<input id="clubReadoutToggle" type="checkbox" role="switch">
 			</label>
-			<label class="toggle-row" for="soundToggle">
+			<label class="toggle-row" for="ballReadoutToggle">
 				<span>
-					<strong>Status sounds</strong>
-					<small>Play feedback sounds for recording, rejected swings, and successful captures.</small>
+					<strong>Ball speed</strong>
+					<small>Read ball speed when a ball was hit.</small>
 				</span>
-				<input id="soundToggle" type="checkbox" role="switch">
+				<input id="ballReadoutToggle" type="checkbox" role="switch">
 			</label>
+			<label class="toggle-row" for="carryReadoutToggle">
+				<span>
+					<strong>Carry</strong>
+					<small>Read the locally calculated carry estimate when enough ball data is present.</small>
+				</span>
+				<input id="carryReadoutToggle" type="checkbox" role="switch">
+			</label>
+			<p class="sound-note">Status sounds are always enabled after you tap Connect R10.</p>
 			<div class="button-row">
 				<button id="connectButton" class="primary-button" type="button">Connect R10</button>
 				<button id="disconnectButton" class="secondary-button hidden" type="button">Disconnect</button>
@@ -95,6 +134,6 @@
 			<p>Unofficial R10 utility. Not affiliated with or endorsed by Garmin.</p>
 		</footer>
 	</main>
-	<script type="module" src="./src/main.js"></script>
+	<script type="module" src="./src/app.js"></script>
 </body>
 </html>
